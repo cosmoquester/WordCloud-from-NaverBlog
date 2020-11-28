@@ -31,7 +31,7 @@ jobs:
           name: Run Tests
           command: |
             source env/bin/activate
-            pytest --cov-branch --cov sample_package
+            pytest --cov-branch --cov nbclouder
 
       - run:
           name: Upload coverage report
@@ -63,8 +63,8 @@ jobs:
           name: Run black, isort
           command: |
             source env/bin/activate
-            black --check sample_package tests
-            isort sample_package tests
+            black --check nbclouder tests
+            isort nbclouder tests
 
 workflows:
   main:
