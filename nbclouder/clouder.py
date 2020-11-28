@@ -198,7 +198,9 @@ class Clouder:
         height: int = 600,
         **kwargs,
     ) -> Tuple[WordCloud, Dict[str, int], List[str], List[str]]:
-        """"""
+        """
+        Carry out all processes. parameters is same as other functions.
+        """
         post_ids = self.get_post_ids()
         contents = self.get_contents(post_ids)
         word_frequency = self.get_word_frequency(contents, pos_tagging_fn, white_tags)
