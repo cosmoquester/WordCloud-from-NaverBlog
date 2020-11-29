@@ -64,7 +64,7 @@ class Clouder:
         :return: a list of pid (post id) of Naver blog.
         """
         url = "http://blog.naver.com/PostTitleListAsync.nhn"
-        post_ids = []
+        post_ids = set()
 
         for category_name in category_names:
             params = {
@@ -89,21 +89,22 @@ class Clouder:
                 ids = [d["logNo"] for d in lists]
 
                 if ids[0] not in post_ids:
-                    post_ids += ids
+                    post_ids.update(ids)
                     params["currentPage"] += 1
                 else:
                     print(f"Get post ids: {len(post_ids)} posts found.")
                     break
-        return post_ids
+        return sorted(list(post_ids))
 
     def get_contents(
-        self, post_ids: List[str], without_datetime: bool = True
-    ) -> Union[List[Tuple[datetime, str]], List[str]]:
+        self, post_ids: List[str], datetime_filter_fn: Optional[Callable[[datetime], bool]] = None
+    ) -> List[str]:
         """
         Get content of posts.
 
-        post_ids: a list of post id in Naver blog.
-        return:  a collection of contents of posts. if without_datetime is true, just return post context.
+        :param post_ids: a list of post id in Naver blog.
+        :param datetime_filter_fn: the function to filter post by datetime
+        return: a collection of contents of posts. if without_datetime is true, just return post context.
         """
         contents = []
         url = f"http://blog.naver.com/PostView.nhn"
@@ -133,7 +134,7 @@ class Clouder:
                 continue
 
             text = re.sub("\s+", " ", text).strip()
-            if without_datetime:
+            if datetime_filter_fn is None:
                 contents.append(text)
                 continue
 
@@ -144,11 +145,13 @@ class Clouder:
 
             if date_time:
                 date_time = date_time[0].get_text()
+                post_datetime = datetime.strptime(date_time, "%Y. %m. %d. %H:%M")
+                if not datetime_filter_fn(post_datetime):
+                    continue
             else:
-                print(f"[Error] cannot select datetime in {post_id}.")
-                date_time = "1900. 01. 01. 00:00"
+                print(f"[Error] cannot select datetime in {post_id}, this post is not filtered")
 
-            contents.append((datetime.strptime(date_time, "%Y. %m. %d. %H:%M"), text.strip()))
+            contents.append(text)
 
         print(f"Get contexts: {len(contents)} found.")
         return contents
@@ -225,6 +228,7 @@ class Clouder:
         image_path: str,
         font_path: str,
         pos_tagging_fn: Optional[Callable[[str], List[Tuple[str, str]]]] = None,
+        datetime_filter_fn: Optional[Callable[[datetime], bool]] = None,
         white_tags: Iterable[str] = ("Noun", "Verb", "Adjective"),
         background_color: str = "white",
         width: int = 800,
@@ -235,7 +239,7 @@ class Clouder:
         Carry out all processes. parameters is same as other functions.
         """
         post_ids = self.get_post_ids(category_names)
-        contents = self.get_contents(post_ids)
+        contents = self.get_contents(post_ids, datetime_filter_fn)
         word_frequency = self.get_word_frequency(contents, pos_tagging_fn, white_tags)
         word_cloud = self.make_cloud(image_path, word_frequency, font_path, background_color, width, height, **kwargs)
 
