@@ -1,8 +1,9 @@
 """
 You can filter posts in making word cloud.
 """
-from nbclouder import Clouder
 from datetime import datetime, timedelta
+
+from nbclouder import Clouder
 
 # Fill parameters properly
 naver_id = ""
