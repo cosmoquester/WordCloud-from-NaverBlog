@@ -5,11 +5,9 @@ from nbclouder import Clouder
 
 # Fill parameters properly
 naver_id = ""
-categoryNo = 0
-par_categoryNo = 0
 
-clouder = Clouder(naver_id, categoryNo, par_categoryNo)
-post_ids = clouder.get_post_ids()
+clouder = Clouder(naver_id)
+post_ids = clouder.get_post_ids(["전체글"])
 contents = clouder.get_contents(post_ids, without_datetime=False)
 
 # Filtered by post datetime

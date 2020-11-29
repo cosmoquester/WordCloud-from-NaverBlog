@@ -5,11 +5,9 @@ from nbclouder import Clouder
 
 # Fill parameters properly
 naver_id = ""
-categoryNo = 0
-par_categoryNo = 0
 font_path = "/Library/Fonts/Arial Unicode.ttf"
 
-clouder = Clouder(naver_id, categoryNo, par_categoryNo)
+clouder = Clouder(naver_id, ["전체글"])
 _, word_frequency, *_ = clouder.fire("word_cloud.png", font_path)
 # Then 'word_cloud.png' is saved
 
