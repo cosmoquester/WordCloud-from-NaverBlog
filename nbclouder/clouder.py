@@ -14,8 +14,6 @@ class Clouder:
     """
     Get posts and make word cloud.
 
-    :param categoryNo: the category number of the board to get posts.
-    :param par_categoryNo: the parent category number of the board to get posts.
     :param naver_id: naver id of owner of posts. you should understand this is not your naver id.
     :param NID_AUT: one of naver login cookie, you can find by browser cookies tab. this is necessary if you want to get private posts.
     :param NID_SES: one of naver login cookie. this is similar to NID_AUT.
@@ -24,51 +22,79 @@ class Clouder:
     def __init__(
         self,
         naver_id: str,
-        categoryNo: int,
-        par_categoryNo: int,
         NID_AUT: Optional[str] = None,
         NID_SES: Optional[str] = None,
     ):
+        # Make session and Set naver cookie
         self.session = Session()
+        self.session.get("https://m.naver.com")
 
         self.naver_id = naver_id
-        self.categoryNo = categoryNo
-        self.par_categoryNo = par_categoryNo
+        self._get_categories()
 
         if NID_AUT and NID_SES:
             self.session.cookies.set("NID_AUT", NID_AUT)
             self.session.cookies.set("NID_SES", NID_SES)
             print("Finished setting cookies")
 
-    def get_post_ids(self) -> List[str]:
+    def _get_categories(self):
+        response = self.session.get(
+            f"https://m.blog.naver.com/rego/CategoryList.nhn?blogId={self.naver_id}",
+            headers={"Referer": f"https://m.blog.naver.com"},
+        )
+        data = json.loads(response.text.split("\n")[1])["result"]["mylogCategoryList"]
+        self.categories = {
+            d["categoryName"].replace("\xa0", " "): (d["categoryNo"], d["parentCategoryNo"])
+            for d in data
+            if not d["divisionLine"]
+        }
+        self.categories["전체글"] = (0, None)
+
+    def category_names(self):
+        """
+        Return all category names.
+        """
+        return list(self.categories.keys())
+
+    def get_post_ids(self, category_names: List[str]) -> List[str]:
         """
         Get list of post ids.
 
+        :param category_names: category names to get posts.
         :return: a list of pid (post id) of Naver blog.
         """
-        url = f"http://blog.naver.com/PostTitleListAsync.nhn"
+        url = "http://blog.naver.com/PostTitleListAsync.nhn"
         post_ids = []
-        params = {
-            "blogId": self.naver_id,
-            "currentPage": 1,
-            "categoryNo": self.categoryNo,
-            "parentCategoryNo": self.par_categoryNo,
-            "countPerPage": 30,
-            "viewdate": "",
-        }
-        while True:
-            response = self.session.get(url, params=params)
-            data = json.loads(response.text.replace("\\", "\\\\"))
 
-            lists = data["postList"]
-            ids = [d["logNo"] for d in lists]
+        for category_name in category_names:
+            params = {
+                "blogId": self.naver_id,
+                "currentPage": 1,
+                "categoryNo": self.categories[category_name][0],
+                "parentCategoryNo": self.categories[category_name][1],
+                "countPerPage": 30,
+                "viewdate": "",
+            }
+            while True:
+                response = self.session.get(url, params=params)
+                data = json.loads(response.text.replace("\\", "\\\\"))
 
-            if ids[0] not in post_ids:
-                post_ids += ids
-                params["currentPage"] += 1
-            else:
-                print(f"Get post ids: {len(post_ids)} posts found.")
-                return post_ids
+                try:
+                    lists = data["postList"]
+                except KeyError:
+                    params["parentCategoryNo"] = params["categoryNo"]
+                    print("API Error occured restart...", file=sys.stderr)
+                    continue
+
+                ids = [d["logNo"] for d in lists]
+
+                if ids[0] not in post_ids:
+                    post_ids += ids
+                    params["currentPage"] += 1
+                else:
+                    print(f"Get post ids: {len(post_ids)} posts found.")
+                    break
+        return post_ids
 
     def get_contents(
         self, post_ids: List[str], without_datetime: bool = True
@@ -195,6 +221,7 @@ class Clouder:
 
     def fire(
         self,
+        category_names: List[str],
         image_path: str,
         font_path: str,
         pos_tagging_fn: Optional[Callable[[str], List[Tuple[str, str]]]] = None,
@@ -207,7 +234,7 @@ class Clouder:
         """
         Carry out all processes. parameters is same as other functions.
         """
-        post_ids = self.get_post_ids()
+        post_ids = self.get_post_ids(category_names)
         contents = self.get_contents(post_ids)
         word_frequency = self.get_word_frequency(contents, pos_tagging_fn, white_tags)
         word_cloud = self.make_cloud(image_path, word_frequency, font_path, background_color, width, height, **kwargs)
