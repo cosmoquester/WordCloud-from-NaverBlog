@@ -40,6 +40,9 @@ clouder.fire(['IT and 컴퓨터', '후기'], "my_blog_cloud.png", "/Library/Font
 ```
 examples/sample2.py 에 있는 것처럼 특정 날짜의 게시물만 가져오고 싶을 수 있습니다. (ex 올해 글만 보고 싶다)
 
-그럴 때는 위와 같이 datatime_filter_fn 을 넘겨줌으로써 필터링이 가능합니다.
+그럴 때는 위와 같이 datetime_filter_fn 을 넘겨줌으로써 필터링이 가능합니다.
 
 examples에 몇 가지 다르게 사용할 수 있는 예시들을 넣어두었으니 참고하시기 바랍니다.
+
+pos tagging를 뭐로 하느냐에 따라서도 나오는 게 다를 수 있습니다. 제가 여러 가지 모듈로 돌려본 결과로는
+Mecab > Komoran > kkma > Okt 순서로 좋은 결과를 내는 것 같습니다. 특히나 Okt는 기본 모듈로 해놓기는 했지만 형태소의 분류가 Noun, Verb, Adjective보다 상세하게 분류할 수 없어서 의존명사나 보조용언을 필터링할 수 없는 점 때문에 별로 추천하지 않습니다.

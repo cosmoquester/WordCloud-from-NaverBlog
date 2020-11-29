@@ -104,7 +104,7 @@ class Clouder:
 
         :param post_ids: a list of post id in Naver blog.
         :param datetime_filter_fn: the function to filter post by datetime
-        return: a collection of contents of posts. if without_datetime is true, just return post context.
+        return: a collection of contents of posts. if without_datetime is true, just return post content.
         """
         contents = []
         url = f"http://blog.naver.com/PostView.nhn"
@@ -153,7 +153,7 @@ class Clouder:
 
             contents.append(text)
 
-        print(f"Get contexts: {len(contents)} found.")
+        print(f"Get contents: {len(contents)} found.")
         return contents
 
     def get_word_frequency(
