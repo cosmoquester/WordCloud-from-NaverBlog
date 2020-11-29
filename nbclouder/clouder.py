@@ -89,16 +89,22 @@ class Clouder:
             response = self.session.get(url, params=params)
 
             soup = BeautifulSoup(response.text, "html.parser")
-            text = soup.select(f"#post-view{post_id} > div > div > div.se-main-container")
-            text += soup.select(f"#post-view{post_id} > div > div > div.se_component_wrap.sect_dsc.__se_component_area")
+
+            # Smart editor 3
+            text = soup.select_one(f"#post-view{post_id} > div > div > div.se-main-container")
+            # Smart editor 2
+            if not text:
+                text = soup.select_one(
+                    f"#post-view{post_id} > div > div > div.se_component_wrap.sect_dsc.__se_component_area"
+                )
 
             if not text:
-                text = soup.select(f"#post-view{post_id} > div")
+                text = soup.select_one(f"#post-view{post_id}")
             if text:
-                text = text[0].get_text("\n")
+                text = text.get_text("\n").replace("\xa0", " ")  # Space unicode replace
             else:
                 print(f"[Error] cannot select content in {post_id}.", file=sys.stderr)
-                text = ""
+                continue
 
             text = re.sub("\s+", " ", text).strip()
             if without_datetime:
