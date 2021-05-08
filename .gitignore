@@ -22,3 +22,6 @@ venv.bak/
 # image file
 *.png
 *.jpg
+
+# mac
+.DS_Store
