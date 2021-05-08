@@ -210,7 +210,9 @@ class Clouder:
         :param image_path: path to save image.
         :param word_frequency: key is word(morphs) and value is count.
         :param font_path: font file path to draw word to image.
-        :param `background_color`, `width`, `height`: parameter of 'WordCloud'. refer to 'wordcloud' docs.
+        :param background_color: background color for word cloud image.
+        :param width: width of the canvas.
+        :param height: height of the canvas.
         :return: wordcloud object made using 'word_frequency'
         """
         word_cloud = WordCloud(
